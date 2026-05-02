@@ -7,6 +7,7 @@ import os
 import re
 import math
 from collections import Counter
+import bisect
 
 # --- CONFIGURATION & THRESHOLDS ---
 BURSTINESS_THRESHOLD = 8.0
@@ -92,6 +93,27 @@ def check_text(text, lang=DEFAULT_DIALECT):
     doc = nlp(text)
     results["authorship_audit"] = calculate_ai_markers(doc)
     
+    # Pre-calculate sentence boundaries for efficient lookup
+    sentences = list(doc.sents)
+    # Create a map from start character index to the sentence object
+    sent_map = {s.start_char: s for s in sentences}
+    sorted_sent_starts = sorted(sent_map.keys())
+
+    def get_sentence_for_offset(offset):
+        """Finds the sentence containing a given character offset."""
+        # Find the index of the sentence that starts at or before the offset
+        idx = bisect.bisect_right(sorted_sent_starts, offset)
+        if idx == 0:
+            return ""
+        
+        sent_start = sorted_sent_starts[idx - 1]
+        sentence = sent_map[sent_start]
+        
+        # Ensure the offset is actually within this sentence's bounds
+        if sentence.start_char <= offset < sentence.end_char:
+            return sentence.text
+        return ""
+
     matcher = Matcher(nlp.vocab)
     matcher.add("PASSIVE_VOICE", [[{"DEP": "auxpass"}, {"DEP": "ROOT", "TAG": "VBN"}]])
     matcher.add("SPLIT_INFINITIVE", [[{"LOWER": "to"}, {"POS": "ADV"}, {"POS": "VERB"}]])
@@ -105,13 +127,18 @@ def check_text(text, lang=DEFAULT_DIALECT):
     # Mechanical (LanguageTool)
     matches = tool.check(text)
     for match in matches:
+        # Hardcoded rule: Ignore Oxford spelling suggestions to enforce common British English.
+        if match.rule_id == 'OXFORD_SPELLING_Z_NOT_S':
+            continue
+
         results["mechanical_errors"].append({
             "message": match.message,
             "replacements": match.replacements[:3],
             "offset": match.offset,
             "length": match.error_length,
             "rule_id": match.rule_id,
-            "context": match.context
+            "context": match.context,
+            "sentence": get_sentence_for_offset(match.offset)
         })
 
     # Structural & Tone (Matchers)
@@ -119,16 +146,24 @@ def check_text(text, lang=DEFAULT_DIALECT):
     for match_id, start, end in spacy_matches:
         rule_name = nlp.vocab.strings[match_id]
         span = doc[start:end]
+        
         target = results["style_and_tone"] if "HEDGING" in rule_name else results["structural_issues"]
-        target.append({"type": rule_name, "text": span.text, "offset": span.start_char})
+        target.append({
+            "type": rule_name, 
+            "text": span.text, 
+            "offset": span.start_char,
+            "sentence": get_sentence_for_offset(span.start_char)
+        })
 
     # Sentence Length
-    for sent in doc.sents:
-        if len(sent) > 25:
+    for sent in sentences:
+        # Check word count, not just tokens, for a more accurate message
+        if len([token for token in sent if not token.is_punct]) > 25:
             results["structural_issues"].append({
                 "type": "LONG_SENTENCE",
                 "text": sent.text[:60] + "...",
-                "message": "Sentence too long (>25 words). Split for clarity."
+                "message": "Sentence too long (>25 words). Split for clarity.",
+                "sentence": sent.text
             })
 
     results["summary"] = {

@@ -6,11 +6,10 @@ A private, local hybrid grammar engine designed to perform technical audits of a
 
 ### 1. System Tools
 - **Java 17+**: Required for the LanguageTool engine.
-- **Pandoc**: Required for processing Microsoft Word (`.docx`) files.
 
-You can install both using Chocolatey:
+You can install it using Chocolatey:
 ```bash
-choco install openjdk17 pandoc -y
+choco install openjdk17 -y
 ```
 
 ### 2. Python Environment
@@ -37,4 +36,3 @@ python engine.py "C:\path\to\your\document.pdf"
 ## 🔍 Troubleshooting
 
 - **Java Errors**: If you see "Java not found", ensure OpenJDK 17 is installed and restart your terminal.
-- **DOCX Issues**: If Word documents fail to load, verify that `pandoc` is accessible in your terminal.
