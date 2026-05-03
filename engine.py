@@ -17,6 +17,7 @@ DEFAULT_DIALECT = 'en-GB'
 # --- GLOBAL RESOURCE CACHE (Lazy Loading) ---
 _NLP_MODEL = None
 _LANG_TOOL = None
+_AI_CLICHES = None
 
 def get_nlp():
     global _NLP_MODEL
@@ -37,6 +38,20 @@ def get_lang_tool(lang):
                 raise RuntimeError("Java not found or incompatible. LanguageTool requires Java 17+. Run 'java -version' to check.")
             raise e
     return _LANG_TOOL
+
+def get_cliches():
+    """Loads AI clichés from the lexicon file once and caches them."""
+    global _AI_CLICHES
+    if _AI_CLICHES is None:
+        try:
+            cliche_path = os.path.join(os.path.dirname(__file__), 'lexicon', 'ai_cliches.json')
+            with open(cliche_path, 'r', encoding='utf-8') as f:
+                _AI_CLICHES = json.load(f)
+        except FileNotFoundError:
+            raise RuntimeError("Lexicon file 'lexicon/ai_cliches.json' not found.")
+        except json.JSONDecodeError:
+            raise RuntimeError("Failed to decode 'lexicon/ai_cliches.json'. Check for syntax errors.")
+    return _AI_CLICHES
 
 def calculate_ai_markers(doc):
     """Calculates statistical markers to predict AI vs Human authorship."""
@@ -78,14 +93,16 @@ def check_text(text, lang=DEFAULT_DIALECT):
         "mechanical_errors": [],
         "structural_issues": [],
         "style_and_tone": [],
+        "ai_cliche_flags": [],
         "authorship_audit": {},
         "summary": {}
     }
-    
-    # 1. Resource Initialization
+
+    # 1. Resource and Lexicon Initialization
     try:
         nlp = get_nlp()
         tool = get_lang_tool(lang)
+        ai_cliches = get_cliches()
     except RuntimeError as e:
         return {"error": str(e)}
 
@@ -95,13 +112,11 @@ def check_text(text, lang=DEFAULT_DIALECT):
     
     # Pre-calculate sentence boundaries for efficient lookup
     sentences = list(doc.sents)
-    # Create a map from start character index to the sentence object
     sent_map = {s.start_char: s for s in sentences}
     sorted_sent_starts = sorted(sent_map.keys())
 
     def get_sentence_for_offset(offset):
         """Finds the sentence containing a given character offset."""
-        # Find the index of the sentence that starts at or before the offset
         idx = bisect.bisect_right(sorted_sent_starts, offset)
         if idx == 0:
             return ""
@@ -109,7 +124,6 @@ def check_text(text, lang=DEFAULT_DIALECT):
         sent_start = sorted_sent_starts[idx - 1]
         sentence = sent_map[sent_start]
         
-        # Ensure the offset is actually within this sentence's bounds
         if sentence.start_char <= offset < sentence.end_char:
             return sentence.text
         return ""
@@ -124,10 +138,23 @@ def check_text(text, lang=DEFAULT_DIALECT):
         matcher.add("HEDGING_WEAKNESS", [[{"LOWER": word}]])
 
     # 3. Execution Pass
+    # AI Cliché Detection
+    for cliche in ai_cliches:
+        # Use word boundaries to avoid matching parts of words
+        pattern = r'\b' + re.escape(cliche['phrase'].rstrip(',')) + r',?\b'
+        for match in re.finditer(pattern, text, re.IGNORECASE):
+            offset = match.start()
+            results["ai_cliche_flags"].append({
+                "phrase": match.group(0),
+                "suggestion": cliche['suggestion'],
+                "offset": offset,
+                "length": len(match.group(0)),
+                "sentence": get_sentence_for_offset(offset)
+            })
+
     # Mechanical (LanguageTool)
     matches = tool.check(text)
     for match in matches:
-        # Hardcoded rule: Ignore Oxford spelling suggestions to enforce common British English.
         if match.rule_id == 'OXFORD_SPELLING_Z_NOT_S':
             continue
 
@@ -157,7 +184,6 @@ def check_text(text, lang=DEFAULT_DIALECT):
 
     # Sentence Length
     for sent in sentences:
-        # Check word count, not just tokens, for a more accurate message
         if len([token for token in sent if not token.is_punct]) > 25:
             results["structural_issues"].append({
                 "type": "LONG_SENTENCE",
@@ -170,6 +196,7 @@ def check_text(text, lang=DEFAULT_DIALECT):
         "mechanical": len(results["mechanical_errors"]),
         "structural": len(results["structural_issues"]),
         "style": len(results["style_and_tone"]),
+        "cliches": len(results["ai_cliche_flags"]),
         "ai_prediction": results["authorship_audit"]["prediction"],
         "dialect": lang
     }

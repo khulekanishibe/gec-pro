@@ -48,6 +48,7 @@ python engine.py "C:\path\to\my\document.pdf"
 
 - **Mechanical Audit:** Detects typos, punctuation errors, and basic grammar issues using LanguageTool.
 - **Structural Analysis:** Identifies passive voice, split infinitives, and overly long sentences using SpaCy.
+- **Lexical AI Detection:** Flags common AI-generated phrases and clichés (e.g., "In conclusion," "It is important to note that...") and provides suggestions for more human-sounding alternatives. This complements the statistical analysis by looking for known patterns.
 - **Authorship Statistics:** Provides statistical markers (sentence "burstiness" and vocabulary "entropy") to help distinguish between human and AI-generated writing.
 - **Dialect Enforcement:** Strictly tuned for **British English** (Oxford/UK standards). The engine automatically ignores OED-style "-ize" suggestions to enforce common "-ise" spelling.
 

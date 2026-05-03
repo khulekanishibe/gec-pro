@@ -1,0 +1,90 @@
+[
+  {
+    "phrase": "In conclusion,",
+    "suggestion": "Try ending with a direct statement instead."
+  },
+  {
+    "phrase": "To summarize,",
+    "suggestion": "Try ending with a direct statement instead."
+  },
+  {
+    "phrase": "Overall,",
+    "suggestion": "Consider if this is needed or if the context implies it."
+  },
+  {
+    "phrase": "It is important to note that",
+    "suggestion": "Consider omitting. If the information is important, its context should show that."
+  },
+  {
+    "phrase": "It should be noted that",
+    "suggestion": "Consider omitting. If the information is important, its context should show that."
+  },
+  {
+    "phrase": "This demonstrates that",
+    "suggestion": "Be more direct. 'This shows...'"
+  },
+  {
+    "phrase": "This shows that",
+    "suggestion": "Be more direct. 'This shows...'"
+  },
+  {
+    "phrase": "According to recent studies,",
+    "suggestion": "Cite the specific study."
+  },
+  {
+    "phrase": "Research suggests that",
+    "suggestion": "Cite the specific research."
+  },
+  {
+    "phrase": "In today’s modern world",
+    "suggestion": "This is often redundant. Consider omitting."
+  },
+  {
+    "phrase": "With the advancement of technology",
+    "suggestion": "Be specific about the technology."
+  },
+  {
+    "phrase": "This is due to the fact that",
+    "suggestion": "Use 'because'."
+  },
+  {
+    "phrase": "This is because",
+    "suggestion": "Use 'because'."
+  },
+  {
+    "phrase": "Furthermore,",
+    "suggestion": "Consider using a stronger transition or starting a new sentence."
+  },
+  {
+    "phrase": "Additionally,",
+    "suggestion": "Consider using a stronger transition or starting a new sentence."
+  },
+  {
+    "phrase": "Moreover,",
+    "suggestion": "Consider using a stronger transition or starting a new sentence."
+  },
+  {
+    "phrase": "There are several reasons why",
+    "suggestion": "Be direct. 'This happened because...'"
+  },
+  {
+    "phrase": "There are many factors that",
+    "suggestion": "Be direct. 'This was caused by...'"
+  },
+  {
+    "phrase": "The purpose of this essay is to",
+    "suggestion": "Start with your main point directly."
+  },
+    {
+    "phrase": "The purpose of this article is to",
+    "suggestion": "Start with your main point directly."
+  },
+  {
+    "phrase": "It can be concluded that",
+    "suggestion": "State your conclusion directly."
+  },
+  {
+    "phrase": "It can be seen that",
+    "suggestion": "Be more direct. 'This shows...'"
+  }
+]
