@@ -24,7 +24,7 @@ This tool was created to provide a powerful, privacy-first alternative to commer
 
 ## 🚀 "Review Mode" in Action
 
-`gec-pro` doesn't just fix your text; it helps you understand the issues. When run by an AI agent, it produces a clear, actionable report.
+`GEC-Pro` doesn't just fix your text; it helps you understand the issues. When run by an AI agent, it produces a clear, actionable report.
 
 #### **Before (The Engine's Raw JSON Output):**
 ```json
